@@ -190,11 +190,3 @@
     }
   }
 }
-
-@media (width >= 900px) {
-  .embed-tariff-search {
-    .tariff-search-fields {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-}
