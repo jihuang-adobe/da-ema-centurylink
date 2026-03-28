@@ -1,0 +1,29 @@
+.hero-legal-banner {
+  background: linear-gradient(135deg, #036 0%, #004a8f 50%, #1a6bb5 100%);
+  color: #fff;
+  padding: 32px 0;
+  position: relative;
+  overflow: hidden;
+
+  > div {
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+  }
+
+  .hero-legal-banner-heading {
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0;
+    line-height: 1.3;
+  }
+}
+
+@media (width >= 900px) {
+  .hero-legal-banner {
+    padding: 48px 0;
+
+    .hero-legal-banner-heading {
+      font-size: 36px;
+    }
+  }
+}
