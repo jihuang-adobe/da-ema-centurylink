@@ -12,8 +12,14 @@
 
 import { fetchSchedule, fetchFromAem } from './handlers/aem.js';
 import fetchDaSc from './handlers/dasc.js';
+import fetchTariffSearch from './handlers/tariff-proxy.js';
 
 const ROUTES = [
+  // Handle tariff search proxy
+  {
+    match: (path) => path === '/api/tariff-search',
+    handler: fetchTariffSearch,
+  },
   // Handle schedule manifests
   {
     match: (path) => path.includes('/schedules/') && path.endsWith('json'),

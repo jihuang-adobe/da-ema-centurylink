@@ -1,3 +1,5 @@
+const PROXY_API = '/api/tariff-search';
+const FALLBACK_URL = 'https://www.centurylink.com/aboutus/legal/tariff-library.html#tariff-search';
 const RESULTS_PER_PAGE = 25;
 
 function parseEntries(data) {
@@ -106,15 +108,18 @@ export default async function init(el) {
   let entries;
   let resultsDB;
   try {
-    const [entryResp, resultsResp] = await Promise.all([
-      fetch('/blocks/embed-tariff-search/tariff-data.json'),
-      fetch('/blocks/embed-tariff-search/tariff-results.json'),
-    ]);
+    const entryResp = await fetch('/blocks/embed-tariff-search/tariff-data.json');
     entries = parseEntries(await entryResp.json());
-    resultsDB = await resultsResp.json();
   } catch {
     el.innerHTML = '<p class="tariff-search-error">Failed to load tariff data.</p>';
     return;
+  }
+
+  try {
+    const resultsResp = await fetch('/blocks/embed-tariff-search/tariff-results.json');
+    resultsDB = await resultsResp.json();
+  } catch {
+    resultsDB = null;
   }
 
   el.textContent = '';
@@ -186,18 +191,38 @@ export default async function init(el) {
 
   tar.select.addEventListener('change', updateSearchBtn);
 
-  searchBtn.addEventListener('click', () => {
+  searchBtn.addEventListener('click', async () => {
     searchBtn.disabled = true;
+    searchBtn.textContent = 'Searching\u2026';
     resultsContainer.innerHTML = '';
 
-    const key = [
-      jur.select.value,
-      ent.select.value,
-      nam.select.value,
-      tar.select.value,
-    ].join('|');
+    const params = {
+      jurisdiction: jur.select.value,
+      entityType: ent.select.value,
+      entityName: nam.select.value,
+      tariffType: tar.select.value,
+    };
 
-    const results = resultsDB[key] || [];
+    // Try proxy first, then local data, then redirect to CenturyLink
+    let results;
+    try {
+      const qs = new URLSearchParams(params).toString();
+      const resp = await fetch(`${PROXY_API}?${qs}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      results = data.queryResultJson || [];
+    } catch {
+      if (resultsDB) {
+        const key = Object.values(params).join('|');
+        results = resultsDB[key] || [];
+      } else {
+        window.open(FALLBACK_URL, '_blank', 'noopener,noreferrer');
+        searchBtn.textContent = 'Search';
+        updateSearchBtn();
+        return;
+      }
+    }
+
     renderResults(resultsContainer, results, 1);
     searchBtn.textContent = 'Search';
     updateSearchBtn();
